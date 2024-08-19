@@ -5,7 +5,7 @@ while True:
     link = input('enter product link: \n')
     # link = "https://www.amazon.in/Creative-USB-Powered-Speakers-Far-Field-Radiators/dp/B0791H74NT/ref=sr_1_4?dib=eyJ2IjoiMSJ9.uY-gfq8TXRPwCKkURDzxRurkRLudc4BecbitTzTuF9SvE_t3MoGkGmzwa742ctoMyH5J1nJNe-1s-wyr9JlxI8JeN1PLMguyh9GhXufIgot4aKaMCpPBMPhhIr-DMwhnEfFPU5jrs592o563ivHHnT2ycnZdYaVdEGdIq7rEP8Bv1GDQfEG-h194FTzx5ro8NC0tsfBV-_ifq80gnxngeIw9R52Hy_AdSsMKLaU7g-c.Tg95DmvMlOqwgR0CXGFkW__q-iMHE2IZI_CsD913qUs&dib_tag=se&keywords=creative+speakers&qid=1722338216&sr=8-4"
 
-    if link == '':
+    if link == '' or validators.url(link) == False:
         break
 
     if validators.url(link):
