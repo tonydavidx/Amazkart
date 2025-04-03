@@ -1,83 +1,80 @@
-from email.mime.multipart import MIMEMultipart
 import os
-from pydoc import plain
 import random
-import smtplib
-from time import sleep
-from selenium import webdriver
 from selenium.webdriver.common.by import By
-import csv
-import pandas as pd
-from selenium.webdriver.firefox.options import Options
-from email.mime.text import MIMEText
-from selenium.webdriver.firefox.service import Service
-from selenium.webdriver.firefox.options import Options
+import time
+from price_tracker import (
+    initialize_driver,
+    load_products,
+    save_products,
+    save_price_history,
+)
+from email_sender import send_price_alert
+from chart_generator import generate_chart_image
+
+os.chdir("D:/Documents/Python/Amazkart")
 
 
-# Create Firefox options and set preferences to disable images
-options = Options()
-options.set_preference("permissions.default.image", 2)
+def track_prices():
+    driver = initialize_driver()
+    products = load_products()
 
-options.add_argument('--headless')
-driver_path = "C:/programs/geckodriver.exe"  # Replace with the actual path
-
-
-# Create a WebDriver instance with the options
-driver = webdriver.Firefox(service=Service(driver_path), options=options)
-
-
-data_file = 'D:/Documents/python/amazkart/products.csv'
-products_data = []
-
-with open(data_file, 'r') as csvfile:
-    csv_reader = csv.DictReader(csvfile)
-    for row in csv_reader:
-        products_data.append(row)
-
-for i in range(len(products_data)):
     try:
-        link = products_data[i]['link']
-        driver.get(link)
-        title = driver.find_element(By.ID, "productTitle").text[:75]
-        # print(title)
-        products_data[i]['name'] = title[:50]
-        current_price = int(products_data[i]['price'])
-        price_to_pay = driver.find_element(By.CLASS_NAME, 'priceToPay')
-        price_element = price_to_pay.find_element(
-            By.CLASS_NAME, 'a-price-whole').text
+        for product in products:
+            try:
+                product_id = product["link"].split("/")[-1]
+                driver.get(product["link"])
 
-        new_price = int(price_element.replace(',', ''))
+                # Get product details
+                title = driver.find_element(By.ID, "productTitle")
+                short_title = title.text.split()[:8]
+                short_title = " ".join(short_title)
+                product["name"] = short_title
 
-        if new_price < current_price:
-            products_data[i]['price'] = new_price
-            print(f'Price dropped for {products_data[i]["name"]}')
+                # Get current price
+                price_element = driver.find_element(By.CLASS_NAME, "priceToPay")
+                new_price = int(
+                    price_element.find_element(
+                        By.CLASS_NAME, "a-price-whole"
+                    ).text.replace(",", "")
+                )
+                current_price = int(product["price"])
 
-            message = MIMEMultipart()
-            message['Subject'] = f'🤖 Price dropped for {title[0:30]}'
-            message['From'] = os.getenv("WHC_FROM_EMAIL")
-            message['To'] = os.getenv("WHC_TO_EMAIL")
+                if new_price < current_price:
+                    print(f"Price dropped for {product['name']}")
+                    # Price dropped - save and notify
+                    save_price_history(product_id, new_price)
+                    product["price"] = new_price
 
-            message.attach(
-                MIMEText(f'Price for {title} dropped from {current_price} to {new_price}\n\n{link}', 'plain'))
+                    chart_path = generate_chart_image(
+                        product_id, title, current_price, new_price
+                    )
+                    print(f"Chart generated at {chart_path}")
+                    send_price_alert(product, current_price, new_price, chart_path)
 
-            with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
-                smtp.starttls()
-                smtp.login(user=os.getenv("WHC_FROM_EMAIL"),
-                           password=os.getenv("WHC_EMAIL_PASS"))
-                smtp.send_message(message)
+                    print(f"Price dropped for {product['name']}")
+                elif new_price > current_price:
+                    # Price increased - just update
+                    save_price_history(product_id, new_price)
+                    generate_chart_image(product_id, title, current_price, new_price)
+                    product["price"] = new_price
+                    print(f"Price increased for {product['name']}")
+                else:
+                    save_price_history(product_id, new_price)
+                    print(f"Price unchanged for {product['name']}")
 
-        if new_price > current_price:
-            products_data[i]['price'] = new_price
-            print(f'Price increased for {products_data[i]["name"]}')
+                time.sleep(random.randint(1, 10))
 
-        sleep(random.randint(1, 10))
+            except Exception as e:
+                import traceback
 
-    except Exception as e:
-        print(e)
-        print(f'error in link: {link}')
+                print(
+                    f"Error processing {product.get('name', 'unknown')}:\n{traceback.format_exc()}"
+                )
 
-df = pd.DataFrame(products_data)
-df.to_csv(data_file, index=False)
+    finally:
+        driver.quit()
+        save_products(products)
 
-sleep(3)
-driver.quit()
+
+if __name__ == "__main__":
+    track_prices()
