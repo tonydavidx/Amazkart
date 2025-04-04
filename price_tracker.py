@@ -32,9 +32,21 @@ def load_products():
 
 def save_products(products):
     with open(PRODUCTS_CSV, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["name", "price", "link"])
+        writer = csv.DictWriter(f, fieldnames=["name", "price", "link","status"])
         writer.writeheader()
         writer.writerows(products)
+
+
+def format_title(title):
+    text = title.replace('"', "").replace(":", "")
+    sympols = ["(", ","]
+    for sym in sympols:
+        if sym in text:
+            title = text.split(sym)[0]
+            break
+    title = title.split()[:8]
+    title = " ".join(title)
+    return title
 
 
 def save_price_history(product_id, price):

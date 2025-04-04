@@ -1,12 +1,15 @@
+import traceback
 import os
 import random
 from selenium.webdriver.common.by import By
 import time
+from last_run import last_run
 from price_tracker import (
     initialize_driver,
     load_products,
     save_products,
     save_price_history,
+    format_title,
 )
 from email_sender import send_price_alert
 from chart_generator import generate_chart_image
@@ -25,18 +28,23 @@ def track_prices():
                 driver.get(product["link"])
 
                 # Get product details
-                title = driver.find_element(By.ID, "productTitle")
-                short_title = title.text.split()[:8]
-                short_title = " ".join(short_title)
-                product["name"] = short_title
+                title = driver.find_element(By.ID, "productTitle").text
+                title = format_title(title)
+                product["name"] = title
 
                 # Get current price
-                price_element = driver.find_element(By.CLASS_NAME, "priceToPay")
+                try:
+                    price_element = driver.find_element(By.CLASS_NAME, "priceToPay")
+                except Exception as e:
+                    product["status"] = "Unavailable"
+                    print(f"Product {product['name']} is unavailable.")
+
                 new_price = int(
                     price_element.find_element(
                         By.CLASS_NAME, "a-price-whole"
                     ).text.replace(",", "")
                 )
+
                 current_price = int(product["price"])
 
                 if new_price < current_price:
@@ -44,6 +52,7 @@ def track_prices():
                     # Price dropped - save and notify
                     save_price_history(product_id, new_price)
                     product["price"] = new_price
+                    product["status"] = ""
 
                     chart_path = generate_chart_image(
                         product_id, title, current_price, new_price
@@ -57,6 +66,7 @@ def track_prices():
                     save_price_history(product_id, new_price)
                     generate_chart_image(product_id, title, current_price, new_price)
                     product["price"] = new_price
+                    product["status"] = ""
                     print(f"Price increased for {product['name']}")
                 else:
                     save_price_history(product_id, new_price)
@@ -65,15 +75,15 @@ def track_prices():
                 time.sleep(random.randint(1, 10))
 
             except Exception as e:
-                import traceback
-
-                print(
-                    f"Error processing {product.get('name', 'unknown')}:\n{traceback.format_exc()}"
-                )
+                # print(
+                #     f"Error processing {product.get('name', 'unknown')}:\n{traceback.format_exc()}"
+                # )
+                print(e)
 
     finally:
         driver.quit()
         save_products(products)
+        last_run()
 
 
 if __name__ == "__main__":
