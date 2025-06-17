@@ -11,3 +11,5 @@ def last_run():
 
     with open("lastrun.txt", "w", encoding="utf-8") as f:
         f.writelines(last_run_data)
+
+    print(f"Last run time updated to {new_time}")

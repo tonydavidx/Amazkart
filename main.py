@@ -1,5 +1,5 @@
 import traceback
-import os
+
 import random
 from selenium.webdriver.common.by import By
 import time
@@ -14,7 +14,7 @@ from price_tracker import (
 from email_sender import send_price_alert
 from chart_generator import generate_chart_image
 
-os.chdir("D:/Documents/Python/Amazkart")
+
 
 
 def track_prices():
