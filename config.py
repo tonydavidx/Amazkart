@@ -11,4 +11,4 @@ EMAIL_PASSWORD = os.getenv("WHC_EMAIL_PASS")
 
 # Selenium Configuration
 GECKODRIVER_PATH = "C:/programs/geckodriver.exe"
-HEADLESS = False  # Set to True for headless mode
+HEADLESS = True  # Set to True for headless mode

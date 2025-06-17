@@ -1,22 +1,23 @@
+from itertools import product
 import os
+import re
 import validators
+
+product_csv_file = "D:/Documents/Python/Amazkart/data/products.csv"
 
 product_links = []
 
 os.chdir("D:/Documents/Python/Amazkart")
 
 BASE_LINK = "https://www.amazon.in/dp/"
-with open("D:/Documents/Python/Amazkart/products.csv", "r") as pf:
+with open(product_csv_file, "r") as pf:
     existing_links = pf.readlines()
-
-product_ids = [
-    pl.split(",")[2].split("/")[-1].replace("\n", "") for pl in existing_links
-]
 # print(product_ids)
+
 
 while True:
     link = input("enter product link: \n")
-    # link = "https://www.amazon.in/Creative-USB-Powered-Speakers-Far-Field-Radiators/dp/B0791H74NT/ref=sr_1_4?dib=eyJ2IjoiMSJ9.uY-gfq8TXRPwCKkURDzxRurkRLudc4BecbitTzTuF9SvE_t3MoGkGmzwa742ctoMyH5J1nJNe-1s-wyr9JlxI8JeN1PLMguyh9GhXufIgot4aKaMCpPBMPhhIr-DMwhnEfFPU5jrs592o563ivHHnT2ycnZdYaVdEGdIq7rEP8Bv1GDQfEG-h194FTzx5ro8NC0tsfBV-_ifq80gnxngeIw9R52Hy_AdSsMKLaU7g-c.Tg95DmvMlOqwgR0CXGFkW__q-iMHE2IZI_CsD913qUs&dib_tag=se&keywords=creative+speakers&qid=1722338216&sr=8-4"
+    # link = "https://www.amazon.in/OnePlus-Wireless-Earbuds-Drivers-Playback/dp/B0C8JB3G5W?crid=2539ZAH1CCIQ0&dib=eyJ2IjoiMSJ9.2yTjrwJE21k8wlrL_GhTibJ3zpuH_UVTXx-T0-lJibeluADa-HMIccpsuf1DF4ZyVyNVqKlvUNrJAh3kSYHVaUq19Ps_8am0vEwc70lI3QmKryghz9e0M7N7UEvHcg-nWMpBmlt8RN69ZmpytwrELnaDG2KjrrGVia1vnR7nM-ZOtbnOJwW8Uf1lhabAlafTegXmau81Kh9azN9e6069Vk0CRtv9vs8gW5I7LkdRzoE.RYCL0_5_YCrmjCQ4Yid2cgEkHHzyvDXdLjkd807p5gc&dib_tag=se&keywords=tws&nsdOptOutParam=true&qid=1749476969&sprefix=tws%2Caps%2C290&sr=8-3&th=1"
 
     # # link = "https://www.amazon.in/gp/product/B0B25NXWC7/ref=ox_sc_act_title_1?smid=AJ6SIZC8YQDZX&psc=1"
     # link = "https://www.amazon.in/gp/product/B08ZJFH7Y1/ref=ox_sc_saved_image_1?smid=A14CZOWI0VEHLG&psc=1"
@@ -25,31 +26,22 @@ while True:
         break
 
     if validators.url(link):
-        if "gp" in link:
-            link_list = link.split("/")[:-1]
-            product_id = link_list[-1]
-            new_link = BASE_LINK + product_id
+        pattern = r"/dp/([A-Z0-9]{10})"
+        match = re.search(pattern, link)
+
+        if match:
+            product_id = match.group(1)
+            print(product_id)  # Output: B0C8JB3G5W
         else:
-            link_list = link.split("/")
-            del link_list[3]
-            new_link = link_list[:5]
-            product_id = new_link[-1]
-            new_link = "/".join(new_link)
-        if product_id in product_ids:
-            print("Product already exists")
-            continue
-        print(new_link)
-        product_line = f",0,{new_link}\n"
-        product_links.append(product_line)
+            print("Product ID not found.")
 
-    file_path = f"data/{product_id}.csv"
-    if not os.path.exists(file_path):
-        with open(file_path, "w") as data_file:
-            data_file.write("Date,Price\n")
+        product_links.append(f",0,{BASE_LINK}{product_id}\n")
 
-if len(product_links) >= 1:
-    for pl in product_links:
-        existing_links.append(pl)
+    print(len(product_links), "products added")
 
-    with open("D:/Documents/Python/Amazkart/products.csv", "w") as pf:
-        pf.writelines(existing_links)
+    if len(product_links) >= 1:
+        for pl in product_links:
+            existing_links.append(pl)
+
+        with open(product_csv_file, "w") as pf:
+            pf.writelines(existing_links)
