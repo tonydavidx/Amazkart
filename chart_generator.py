@@ -122,11 +122,18 @@ def generate_chart_image(
             title=f"<b>{product_name[:50]}</b><br><sub>Price History (Current: ₹{new_price:,.0f})</sub>",
             title_x=0.5,
             template="plotly_white",
-            height=600,
+            height=650,  # Increased height to accommodate more space
             width=800,
-            margin=dict(t=100, b=20, l=50, r=50),
+            margin=dict(t=100, b=80, l=50, r=50, pad=10),  # Increased bottom margin and added padding
             showlegend=False,
             xaxis_rangeslider_visible=False,
+            plot_bgcolor='white',
+            xaxis=dict(
+                showline=True,
+                linewidth=1,
+                linecolor='lightgray',
+                mirror=True
+            ),
         )
 
         # Update axes
