@@ -35,7 +35,7 @@ while True:
         else:
             print("Product ID not found.")
 
-        product_links.append(f",0,{BASE_LINK}{product_id}\n")
+        product_links.append(f",0,,,{BASE_LINK}{product_id}\n")
 
     print(len(product_links), "products added")
 

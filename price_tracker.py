@@ -24,15 +24,27 @@ def initialize_driver():
 def load_products():
     products = []
     if os.path.exists(PRODUCTS_CSV):
-        with open(PRODUCTS_CSV, "r") as f:
+        # Use newline='' for reading and writing CSV files and specify encoding
+        with open(PRODUCTS_CSV, "r", newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
-            products = list(reader)
+            # This handles a header like "a,b,c," which creates a `None` fieldname
+            if None in reader.fieldnames:
+                # Filter out None from fieldnames to prevent creating a {None: value} pair
+                reader.fieldnames = [
+                    field for field in reader.fieldnames if field is not None
+                ]
+            for row in reader:
+                # Safely remove the None key from the row dict if it still exists
+                row.pop(None, None)
+                products.append(row)
     return products
 
 
 def save_products(products):
-    with open(PRODUCTS_CSV, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["name", "price", "link","status"])
+    # Use a consistent set of fieldnames for writing
+    fieldnames = ["name", "price", "status", "important", "link"]
+    with open(PRODUCTS_CSV, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(products)
 

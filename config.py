@@ -11,5 +11,8 @@ EMAIL_FROM = os.getenv("WHC_FROM_EMAIL")
 EMAIL_TO = os.getenv("WHC_TO_EMAIL")
 EMAIL_PASSWORD = os.getenv("WHC_EMAIL_PASS")
 
+TELEGRAM_CHAT_ID = os.getenv("CHAT_ID")
+TELEGRAM_ACCESS_TOKEN = os.getenv("AMZ_TL_ACCESS_TOKEN")
+
 # Selenium Configuration
 HEADLESS = True  # Set to True for headless mode
