@@ -2,7 +2,7 @@ name: Price Tracker
 
 on:
   schedule:
-    - cron: "0 19,23,3,7 * * *" # Runs every 3 hours between 00:00 and 12:00
+    - cron: "30 18,22,2,6 * * *" # Runs at 18:30, 22:30, 02:30, 06:30 UTC
   workflow_dispatch: # Allows manual runs
 
 # Set the permissions to allow pushing to the repository

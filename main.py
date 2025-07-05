@@ -1,8 +1,6 @@
-import traceback
-
+import asyncio
 import random
 from selenium.webdriver.common.by import By
-import time
 from last_run import last_run
 from price_tracker import (
     initialize_driver,
@@ -13,11 +11,10 @@ from price_tracker import (
 )
 from email_sender import send_price_alert
 from chart_generator import generate_chart_image
+from telegram_sender import send_price_alert_telegram
 
 
-
-
-def track_prices():
+async def track_prices():
     driver = initialize_driver()
     products = load_products()
 
@@ -38,6 +35,7 @@ def track_prices():
                 except Exception as e:
                     product["status"] = "Unavailable"
                     print(f"Product {product['name']} is unavailable.")
+                    continue
 
                 new_price = int(
                     price_element.find_element(
@@ -57,9 +55,10 @@ def track_prices():
                     chart_path = generate_chart_image(
                         product_id, title, current_price, new_price
                     )
-                    print(f"Chart generated at {chart_path}")
                     send_price_alert(product, current_price, new_price, chart_path)
-
+                    await send_price_alert_telegram(
+                        product, current_price, new_price, chart_path
+                    )
                     print(f"Price dropped for {product['name']}")
                 elif new_price > current_price:
                     # Price increased - just update
@@ -72,7 +71,7 @@ def track_prices():
                     save_price_history(product_id, new_price)
                     print(f"Price unchanged for {product['name']}")
 
-                time.sleep(random.randint(1, 10))
+                await asyncio.sleep(random.randint(1, 5))
 
             except Exception as e:
                 # print(
@@ -87,4 +86,4 @@ def track_prices():
 
 
 if __name__ == "__main__":
-    track_prices()
+    asyncio.run(track_prices())

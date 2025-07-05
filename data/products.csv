@@ -1,8 +1,7 @@
-name,price,link,status
-Creative Pebble 2.0 USB-Powered Desktop Speakers with Far-Field,1999,https://www.amazon.in/dp/B0791H74NT,Unavailable
-Seagate Expansion 4TB External HDD - USB 3.0,10999,https://www.amazon.in/dp/B08ZJFH7Y1,Unavailable
-Western Digital WD 4TB My Passport Portable Hard,11499,https://www.amazon.in/dp/B07VTW2LPX,Unavailable
-"Concept Kart KZ EDX Pro IEM Earphone, HiFi",1103,https://www.amazon.in/dp/B0BKQRF51Z,
-Samsung Galaxy Tab S9 FE [Smartchoice],34999,https://www.amazon.in/dp/B0CHZ38BPP,
-Amazon Brand - Symbol Men's Relaxed Fit Mid,799,https://www.amazon.in/dp/B085J75HK7,
-Crucial Basics 16GB DDR4-3200 SODIMM,3769,https://www.amazon.in/dp/B0CWLSMGCT,Unavailable
+name,price,status,important,link
+Creative Pebble 2.0 USB-Powered Desktop Speakers with Far-Field,1999,,,https://www.amazon.in/dp/B0791H74NT
+Seagate Expansion 4TB External HDD - USB 3.0,10999,,yes,https://www.amazon.in/dp/B08ZJFH7Y1
+Western Digital WD 4TB My Passport Portable Hard,11499,Unavailable,,https://www.amazon.in/dp/B07VTW2LPX
+"Concept Kart KZ EDX Pro IEM Earphone, HiFi",1103,,,https://www.amazon.in/dp/B0BKQRF51Z
+Samsung Galaxy Tab S9 FE [Smartchoice],34999,,,https://www.amazon.in/dp/B0CHZ38BPP
+LG 185 L 5 Star Inverter Direct-Cool Single,17490,,,https://www.amazon.in/dp/B0BRQBVYVB
