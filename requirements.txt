@@ -1,6 +1,6 @@
-selenium
-webdriver-manager
 pandas
 plotly
 kaleido
 telegram
+httpx
+beatifulsoup4
