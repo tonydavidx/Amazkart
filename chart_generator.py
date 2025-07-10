@@ -4,29 +4,8 @@ import plotly.io as pio
 import os
 from config import DATA_DIR
 import plotly.subplots as sp
-
-
-def _load_and_process_data(history_file):
-    """Loads and preprocesses the price history data from a CSV file."""
-    if not os.path.exists(history_file) or os.path.getsize(history_file) < 10:
-        print(
-            f"No history data in {os.path.basename(history_file)}, skipping chart generation."
-        )
-        return None
-
-    df = pd.read_csv(history_file)
-    if df.empty:
-        return None
-
-    df = df[df["price"] != "UNAVAILABLE"]
-    df["price"] = pd.to_numeric(df["price"], errors="coerce")
-    df["datetime"] = pd.to_datetime(
-        df["datetime"], format="%d-%m-%Y %H:%M:%S", errors="coerce"
-    )
-    df = df.dropna(subset=["datetime", "price"])
-    df = df.sort_values("datetime")
-
-    return df if not df.empty else None
+from deal_analyzer import calculate_price_extremes
+from utils import load_and_process_data
 
 
 def _create_chart_title(product_name, old_price, new_price):
@@ -56,15 +35,15 @@ def generate_chart_image(product_id, product_name, old_price, new_price):
     image_path = os.path.join(DATA_DIR, f"{safe_product_name}_chart.png")
 
     try:
-        df = _load_and_process_data(history_file)
+        df = load_and_process_data(history_file)
         if df is None:
             return None
 
         # Calculate stats
-        min_price_row = df.loc[df["price"].idxmin()]
-        min_price = min_price_row["price"]
-        min_price_date = min_price_row["datetime"].strftime("%d-%b-%Y")
-        max_price = df["price"].max()
+        extremes = calculate_price_extremes(df)
+        if extremes is None:
+            return None
+        min_price, min_price_date, max_price, _ = extremes
         avg_price = df["price"].mean()
 
         # Create figure with subplots

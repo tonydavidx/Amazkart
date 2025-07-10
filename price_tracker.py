@@ -1,35 +1,34 @@
 import os
 import csv
-import random
-import pandas as pd
 from datetime import datetime
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.firefox.service import Service as FirefoxService
-from webdriver_manager.firefox import GeckoDriverManager
+
+# from selenium import webdriver
+# from selenium.webdriver.common.by import By
+# from selenium.webdriver.firefox.options import Options
+# from selenium.webdriver.firefox.service import Service as FirefoxService
+# from webdriver_manager.firefox import GeckoDriverManager
 from config import DATA_DIR, PRODUCTS_CSV, HEADLESS
 
 
-def initialize_driver():
-    options = Options()
-    options.set_preference("permissions.default.image", 2)
-    options.set_preference(
-        "general.useragent.override",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0",
-    )
-    options.set_preference("dom.webdriver.enabled", False)
-    options.set_preference("intl.accept_languages", "en-US,en")
-    if HEADLESS:
-        options.add_argument("--headless")
-    driver = webdriver.Firefox(
-        service=FirefoxService(GeckoDriverManager().install()), options=options
-    )
-    driver.execute_script(
-        "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
-    )
+# def initialize_driver():
+#     options = Options()
+#     options.set_preference("permissions.default.image", 2)
+#     options.set_preference(
+#         "general.useragent.override",
+#         "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0",
+#     )
+#     options.set_preference("dom.webdriver.enabled", False)
+#     options.set_preference("intl.accept_languages", "en-US,en")
+#     if HEADLESS:
+#         options.add_argument("--headless")
+#     driver = webdriver.Firefox(
+#         service=FirefoxService(GeckoDriverManager().install()), options=options
+#     )
+#     driver.execute_script(
+#         "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+#     )
 
-    return driver
+#     return driver
 
 
 def load_products():

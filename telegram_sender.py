@@ -4,7 +4,7 @@ from config import TELEGRAM_CHAT_ID, TELEGRAM_ACCESS_TOKEN
 
 
 async def send_price_alert_telegram(
-    product_info, old_price, new_price, chart_path=None
+    product_info, old_price, new_price, chart_path=None, deal_analysis=None
 ):
     """Sends a price drop alert to a Telegram chat."""
     if not TELEGRAM_CHAT_ID or not TELEGRAM_ACCESS_TOKEN:
@@ -19,6 +19,11 @@ async def send_price_alert_telegram(
     bot = telegram.Bot(token=TELEGRAM_ACCESS_TOKEN)
     price_drop_percentage = (old_price - new_price) / old_price * 100
 
+    deal_text = ""
+    if deal_analysis:
+        deal_emoji, deal_message = deal_analysis
+        deal_text = f"\n\n{deal_emoji} <b>{deal_message}</b>"
+
     # Use HTML for rich formatting, similar to the email sender
     message = (
         f"<b>Price Drop Alert! 🚨</b>\n\n"
@@ -26,6 +31,7 @@ async def send_price_alert_telegram(
         f"Price dropped from <strike>₹{old_price:,}</strike> to <b>₹{new_price:,}</b>\n"
         f"You're saving: ₹{old_price - new_price:,} ({price_drop_percentage:.1f}%)\n\n"
         f'<a href="{product_info["link"]}">View on Amazon</a>'
+        f"{deal_text}\n\n"
     )
 
     try:

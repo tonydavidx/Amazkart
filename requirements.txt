@@ -3,4 +3,5 @@ plotly
 kaleido
 telegram
 httpx
-beatifulsoup4
+selenium
+beautifulsoup4

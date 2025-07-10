@@ -9,7 +9,7 @@ from price_tracker import (
     save_price_history,
     format_title,
 )
-from email_sender import send_price_alert
+from deal_analyzer import analyze_deal
 from chart_generator import generate_chart_image
 from telegram_sender import send_price_alert_telegram
 
@@ -39,7 +39,7 @@ async def track_prices():
         for product in products:
             try:
                 product_id = product["link"].split("/")[-1]
-                print(f"Checking price for: {product.get('name') or product_id}")
+                print(f"🔍 Checking price for: {product.get('name') or product_id}")
                 response = await client.get(product["link"])
                 response.raise_for_status()  # Raise an exception for bad status codes
 
@@ -74,23 +74,24 @@ async def track_prices():
                     product["price"] = new_price
                     product["status"] = ""
 
+                    deal_analysis = analyze_deal(product_id, new_price, current_price)
+
                     chart_path = generate_chart_image(
                         product_id, title, current_price, new_price
                     )
-                    send_price_alert(product, current_price, new_price, chart_path)
                     await send_price_alert_telegram(
-                        product, current_price, new_price, chart_path
+                        product, current_price, new_price, chart_path, deal_analysis
                     )
-                    print(f"Price dropped for {product['name']} to {new_price}")
+                    print(f"🤑 Price dropped for {product['name']} to {new_price}")
                 elif new_price > current_price:
                     # Price increased - just update
                     save_price_history(product_id, new_price)
                     generate_chart_image(product_id, title, current_price, new_price)
                     product["price"] = new_price
                     product["status"] = ""
-                    print(f"Price increased for {product['name']} to {new_price}")
+                    print(f"🥲 Price increased for {product['name']} to {new_price}")
                 else:
-                    print(f"Price unchanged for {product['name']}")
+                    print(f"🙂 Price unchanged for {product['name']}")
 
                 await asyncio.sleep(random.randint(2, 6))  # Be a good citizen
 
