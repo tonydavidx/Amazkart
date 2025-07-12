@@ -2,6 +2,8 @@ pandas
 plotly
 kaleido
 telegram
+python-telegram-bot
 httpx
 selenium
+webdriver_manager
 beautifulsoup4

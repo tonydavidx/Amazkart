@@ -2,7 +2,7 @@ name: Price Tracker
 
 on:
   schedule:
-    - cron: "0 17,21,1,5 * * *" # Runs at 18:30, 22:30, 02:30, 06:30 UTC
+    - cron: "0 18,22,2,6 * * *" # Runs at 18:30, 22:30, 02:30, 06:30 UTC
   workflow_dispatch: # Allows manual runs
 
 # Set the permissions to allow pushing to the repository
@@ -38,6 +38,8 @@ jobs:
           WHC_FROM_EMAIL: ${{ secrets.WHC_FROM_EMAIL }}
           WHC_TO_EMAIL: ${{ secrets.WHC_TO_EMAIL }}
           WHC_EMAIL_PASS: ${{ secrets.WHC_EMAIL_PASS }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+          AMZ_TL_ACCESS_TOKEN: ${{ secrets.AMZ_TL_ACCESS_TOKEN }}
         run: python main.py
 
       - name: Commit and push if data changed

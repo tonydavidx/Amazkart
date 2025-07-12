@@ -1,34 +1,39 @@
 import os
 import csv
 from datetime import datetime
-
-# from selenium import webdriver
-# from selenium.webdriver.common.by import By
-# from selenium.webdriver.firefox.options import Options
-# from selenium.webdriver.firefox.service import Service as FirefoxService
-# from webdriver_manager.firefox import GeckoDriverManager
+from selenium import webdriver
+import platform
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from webdriver_manager.firefox import GeckoDriverManager
 from config import DATA_DIR, PRODUCTS_CSV, HEADLESS
 
 
-# def initialize_driver():
-#     options = Options()
-#     options.set_preference("permissions.default.image", 2)
-#     options.set_preference(
-#         "general.useragent.override",
-#         "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0",
-#     )
-#     options.set_preference("dom.webdriver.enabled", False)
-#     options.set_preference("intl.accept_languages", "en-US,en")
-#     if HEADLESS:
-#         options.add_argument("--headless")
-#     driver = webdriver.Firefox(
-#         service=FirefoxService(GeckoDriverManager().install()), options=options
-#     )
-#     driver.execute_script(
-#         "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
-#     )
+def initialize_driver():
+    options = Options()
+    options.set_preference("permissions.default.image", 2)
+    if platform.system() == "Linux":
+        user_agent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0"
+    else:
+        user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0"
+    options.set_preference(
+        "general.useragent.override",
+        user_agent,
+    )
+    options.set_preference("dom.webdriver.enabled", False)
+    options.set_preference("intl.accept_languages", "en-US,en")
+    if HEADLESS:
+        options.add_argument("--headless")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+    firefox_service = FirefoxService(GeckoDriverManager().install())
+    driver = webdriver.Firefox(service=firefox_service, options=options)
+    driver.execute_script(
+        "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+    )
 
-#     return driver
+    return driver
 
 
 def load_products():
