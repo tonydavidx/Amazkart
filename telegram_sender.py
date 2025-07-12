@@ -6,7 +6,7 @@ from config import TELEGRAM_CHAT_ID, TELEGRAM_ACCESS_TOKEN
 async def send_price_alert_telegram(
     product_info, old_price, new_price, chart_path=None, deal_analysis=None
 ):
-    """Sends a price drop alert to a Telegram chat."""
+    """Sends a price drop alert to a Telegram chat with retry logic for timeouts."""
     if not TELEGRAM_CHAT_ID or not TELEGRAM_ACCESS_TOKEN:
         print(
             "Telegram token or chat ID not configured. Skipping Telegram notification."
@@ -34,28 +34,40 @@ async def send_price_alert_telegram(
         f"{deal_text}\n\n"
     )
 
-    try:
-        if chart_path:
-            with open(chart_path, "rb") as chart_image:
-                await bot.send_photo(
+    max_retries = 3
+    retry_delay = 3  # seconds
+
+    for attempt in range(max_retries):
+        try:
+            if chart_path:
+                with open(chart_path, "rb") as chart_image:
+                    await bot.send_photo(
+                        chat_id=TELEGRAM_CHAT_ID,
+                        photo=chart_image,
+                        caption=message,
+                        parse_mode=telegram.constants.ParseMode.HTML,
+                    )
+            else:
+                await bot.send_message(
                     chat_id=TELEGRAM_CHAT_ID,
-                    photo=chart_image,
-                    caption=message,
+                    text=message,
                     parse_mode=telegram.constants.ParseMode.HTML,
                 )
-        else:
-            await bot.send_message(
-                chat_id=TELEGRAM_CHAT_ID,
-                text=message,
-                parse_mode=telegram.constants.ParseMode.HTML,
-            )
-        print(f"Telegram alert sent for {product_info['name']}.")
-    except Exception as e:
-        print(f"Failed to send Telegram alert for {product_info['name']}: {e}")
+            print(f"Telegram alert sent for {product_info['name']}.")
+            return  # Success
+        except Exception as e:
+            if "Timed out" in str(e) and attempt < max_retries - 1:
+                print(
+                    f"Attempt {attempt + 1}/{max_retries} to send Telegram alert for '{product_info['name']}' timed out. Retrying in {retry_delay}s..."
+                )
+                await asyncio.sleep(retry_delay)
+            else:
+                print(f"Failed to send Telegram alert for {product_info['name']}: {e}")
+                return  # Final attempt failed or another error occurred
 
 
 if __name__ == "__main__":
     # Example usage for testing the function directly.
     # To run an async function from the top level, you use asyncio.run().
     test_product = {"name": "Test Product", "link": "https://amazon.in"}
-    asyncio.run(send_price_alert_telegram(test_product, 1000, 800))
+    asyncio.run(send_price_alert_telegram(test_product, 1400, 800))

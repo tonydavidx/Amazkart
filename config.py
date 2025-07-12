@@ -15,4 +15,4 @@ TELEGRAM_CHAT_ID = os.getenv("CHAT_ID")
 TELEGRAM_ACCESS_TOKEN = os.getenv("AMZ_TL_ACCESS_TOKEN")
 
 # Selenium Configuration
-HEADLESS = True  # Set to True for headless mode
+HEADLESS = False  # Set to True for headless mode
