@@ -9,13 +9,15 @@ def calculate_price_extremes(df: pd.DataFrame) -> tuple[float, str, float, str] 
     if df.empty:
         return None
 
-    min_price_row = df.loc[df['price'].idxmin()]
-    min_price = min_price_row['price']
-    min_price_date = min_price_row['datetime'].strftime('%d-%m-%Y')
+    df_sorted = df.sort_values(by="datetime", ascending=False)
 
-    max_price_row = df.loc[df['price'].idxmax()]
-    max_price = max_price_row['price']
-    max_price_date = max_price_row['datetime'].strftime('%d-%m-%Y')
+    min_price_row = df_sorted.loc[df_sorted["price"].idxmin()]
+    min_price = min_price_row["price"]
+    min_price_date = min_price_row["datetime"].strftime("%d-%m-%Y")
+
+    max_price_row = df_sorted.loc[df_sorted["price"].idxmax()]
+    max_price = max_price_row["price"]
+    max_price_date = max_price_row["datetime"].strftime("%d-%m-%Y")
 
     return min_price, min_price_date, max_price, max_price_date
 
@@ -44,13 +46,20 @@ def analyze_deal(
     avg_price = historical_df["price"].mean()
 
     if new_price <= min_price:
-        return ("🔥", f"Hot deal! This is the lowest price ever. Previous low was ₹{min_price} on {min_price_date}.")
+        return (
+            "🔥",
+            f"Hot deal! This is the lowest price ever. Previous low was ₹{min_price} on {min_price_date}.",
+        )
 
     if new_price < avg_price and ((avg_price - new_price) / avg_price) > 0.15:
         percent_below_avg = (avg_price - new_price) / avg_price * 100
-        return ("✅", f"Good deal! {percent_below_avg:.0f}% below average price. The historical price range is ₹{min_price} ({min_price_date}) to ₹{max_price} ({max_price_date}).")
+        return (
+            "✅",
+            f"Good deal! {percent_below_avg:.0f}% below average price. The historical price range is ₹{min_price} ({min_price_date}) to ₹{max_price} ({max_price_date}).",
+        )
 
     return None
+
 
 def get_price_extremes(product_id: str) -> tuple[int, str, int, str] | None:
     """Get the min and max price and their dates for a product."""
