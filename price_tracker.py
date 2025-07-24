@@ -1,12 +1,15 @@
 import os
 import csv
 from datetime import datetime
+import subprocess
 from selenium import webdriver
 import platform
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from webdriver_manager.firefox import GeckoDriverManager
-from config import DATA_DIR, PRODUCTS_CSV, HEADLESS
+from config import BASE_DIR, DATA_DIR, PRODUCTS_CSV, HEADLESS
+from last_run import last_run_today
+from utils import is_github_actions
 
 
 def initialize_driver():
@@ -16,6 +19,28 @@ def initialize_driver():
         user_agent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0"
     else:
         user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0"
+        try:
+            if not last_run_today():
+                result = subprocess.run(
+                    ["git", "pull", "--rebase"],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                    cwd=BASE_DIR,
+                )
+                if "up to date" not in result.stdout.lower():
+                    print("remote repo and local repo synced successfully")
+                    print(result.stdout)
+                else:
+                    print("remote repo and local repo already synced")
+
+        except FileNotFoundError:
+            print("git command not found")
+
+        except subprocess.CalledProcessError as e:
+            print("Error while pulling changes from remote repo:")
+            print(e)
+
     options.set_preference(
         "general.useragent.override",
         user_agent,
@@ -116,3 +141,23 @@ def save_price_history(product_id, price):
     if save_entry:
         with open(history_file, "a") as f:
             f.write(f"{timestamp_to_use},{price}\n")
+
+
+def push_to_github():
+    try:
+        if is_github_actions():
+            print("Running on GitHub Actions, skipping git operations.")
+            return
+        if datetime.now().hour not in [22, 23, 0]:
+            print("Not the right time to push to GitHub, skipping git operations.")
+            return
+        subprocess.run(["git", "add", "data/"], check=True, cwd=BASE_DIR)
+        result = subprocess.run(["git", "diff", "--staged", "--quiet"], cwd=BASE_DIR)
+        if result.returncode != 0:
+            subprocess.run(
+                ["git", "commit", "--amend", "--no-edit"], check=True, cwd=BASE_DIR
+            )
+            subprocess.run(["git", "push", "--force"], check=True, cwd=BASE_DIR)
+    except subprocess.CalledProcessError as e:
+        print(f"Error adding files to git: {e}")
+        return

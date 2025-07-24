@@ -2,7 +2,7 @@ import asyncio
 import random
 import httpx
 from bs4 import BeautifulSoup
-from last_run import last_run
+from last_run import last_run_today
 from price_tracker import (
     load_products,
     save_products,
@@ -103,7 +103,7 @@ async def track_prices():
                 print(f"Error processing {product.get('name', product_id)}: {e}")
 
     save_products(products)
-    last_run()
+    last_run_today()
 
 
 if __name__ == "__main__":
