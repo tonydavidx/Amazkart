@@ -1,8 +1,9 @@
 import asyncio
 import random
+import time
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
-from last_run import last_run
+from last_run import save_last_run
 from price_tracker import (
     initialize_driver,
     load_products,
@@ -13,6 +14,7 @@ from price_tracker import (
 from deal_analyzer import analyze_deal
 from chart_generator import generate_chart_image
 from telegram_sender import send_price_alert_telegram
+from utils import is_github_actions
 
 
 async def track_prices():
@@ -23,6 +25,16 @@ async def track_prices():
         for product in products:
             try:
                 product_id = product["link"].split("/")[-1]
+                # skip unimportant products if run on github actions
+                not_important = (
+                    product["important"] == "False" or product["important"] == "false"
+                )
+                if is_github_actions() and not_important:
+                    print(
+                        f"Skipping {product.get('name', product_id)} for not important"
+                    )
+                    continue
+
                 print(f"🔍 Checking price for: {product.get('name') or product_id}")
                 driver.get(product["link"])
 
@@ -82,7 +94,7 @@ async def track_prices():
     finally:
         driver.quit()
         save_products(products)
-        last_run()
+        save_last_run()
 
 
 if __name__ == "__main__":

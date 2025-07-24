@@ -1,6 +1,12 @@
 import os
 import pandas as pd
 
+
+def is_github_actions():
+    """Check if the script is running in GitHub Actions."""
+    return os.environ.get("GITHUB_ACTIONS") == "true"
+
+
 def load_and_process_data(history_file):
     """Load and process data from csv history file."""
     if not os.path.exists(history_file) or os.path.getsize(history_file) == 0:
