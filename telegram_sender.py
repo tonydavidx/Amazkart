@@ -18,7 +18,13 @@ async def send_price_alert_telegram(
 
     bot = telegram.Bot(token=TELEGRAM_ACCESS_TOKEN)
     price_drop_percentage = (old_price - new_price) / old_price * 100
-
+    # Only send alerts for meaningful drops (at least 1%).
+    # Skip tiny fluctuations under 1% to avoid noisy notifications.
+    if price_drop_percentage < 1.0:
+        print(
+            f"Price drop for {product_info.get('name', 'product')} is {price_drop_percentage:.2f}% (<1%). Skipping Telegram alert."
+        )
+        return
     deal_text = ""
     if deal_analysis:
         deal_emoji, deal_message = deal_analysis
