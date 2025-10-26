@@ -122,9 +122,12 @@ def save_price_history(product_id, price):
             with open(history_file, "a") as f:
                 f.write(f"{timestamp_changed},{price}\n")
             return
-
         last_entry = lines[-1].strip().split(",")
-        last_price = int(last_entry[1])
+        try:
+            last_price = int(last_entry[1])
+        except Exception:
+            # If last price can't be parsed, don't block saving new price
+            last_price = None
         last_date = last_entry[0].split()[0]  # Extract date part only
         current_date = current_datetime.strftime("%d-%m-%Y")
 
@@ -139,8 +142,38 @@ def save_price_history(product_id, price):
         timestamp_to_use = timestamp_unchanged  # Same price, new day - use 00:00:00
 
     if save_entry:
+        # basic sanity check: ignore obvious spikes/drops relative to last_price
+        if last_price is not None:
+            # If new price is 10x higher or 10x lower than last_price, consider it invalid
+            if price > last_price * 10 or price < max(1, int(last_price * 0.1)):
+                print(
+                    f"Suspicious price for {product_id}: {price} (last: {last_price}). Skipping save."
+                )
+                return False
+
         with open(history_file, "a") as f:
             f.write(f"{timestamp_to_use},{price}\n")
+        return True
+    return False
+
+
+def is_sane_price(product_id: str, price: int) -> bool:
+    """Quick sanity check against recent history. Returns True if price looks reasonable."""
+    history_file = os.path.join(DATA_DIR, f"{product_id}.csv")
+    if not os.path.exists(history_file):
+        return True
+    try:
+        with open(history_file, "r") as f:
+            lines = f.readlines()
+            if len(lines) <= 1:
+                return True
+            last_entry = lines[-1].strip().split(",")
+            last_price = int(last_entry[1])
+            if price > last_price * 10 or price < max(1, int(last_price * 0.1)):
+                return False
+            return True
+    except Exception:
+        return True
 
 
 def push_to_github():

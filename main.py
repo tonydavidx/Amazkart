@@ -1,6 +1,5 @@
 import asyncio
 import random
-import time
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from last_run import save_last_run
@@ -11,10 +10,12 @@ from price_tracker import (
     save_price_history,
     format_title,
 )
+from price_tracker import is_sane_price
 from deal_analyzer import analyze_deal
 from chart_generator import generate_chart_image
 from telegram_sender import send_price_alert_telegram
 from utils import is_github_actions
+from utils import parse_price_to_int
 
 
 async def track_prices():
@@ -58,31 +59,70 @@ async def track_prices():
                     print(f"Product {product['name']} is unavailable.")
                     continue
 
-                new_price = int(price_element.text.replace(",", "").replace(".", ""))
-                current_price = int(product["price"])
+                # Parse price robustly (handles commas and decimals)
+                parsed = parse_price_to_int(price_element.text)
+                if parsed is None:
+                    product["status"] = "Unavailable"
+                    print(
+                        f"Could not parse price for {product.get('name', product_id)}. Skipping."
+                    )
+                    continue
+                new_price = parsed
+
+                try:
+                    current_price = int(product["price"])
+                except Exception:
+                    # If current price missing or invalid, treat as 0 so we can initialize
+                    current_price = 0
+
+                # Basic sanity check against history and last price
+                if not is_sane_price(product_id, new_price):
+                    print(
+                        f"Suspicious price detected for {product_id}: {new_price}. Skipping update."
+                    )
+                    product["status"] = "Suspicious"
+                    continue
 
                 if new_price < current_price:
-                    # Price dropped - save and notify
-                    save_price_history(product_id, new_price)
-                    product["price"] = new_price
-                    product["status"] = ""
+                    # Price dropped - save and notify (only if save succeeds)
+                    saved = save_price_history(product_id, new_price)
+                    if not saved:
+                        print(
+                            f"Did not save suspicious/invalid drop for {product_id}: {new_price}"
+                        )
+                        product["status"] = "Suspicious"
+                    else:
+                        product["price"] = new_price
+                        product["status"] = ""
 
-                    deal_analysis = analyze_deal(product_id, new_price, current_price)
+                        deal_analysis = analyze_deal(
+                            product_id, new_price, current_price
+                        )
 
-                    chart_path = generate_chart_image(
-                        product_id, title, current_price, new_price
-                    )
-                    await send_price_alert_telegram(
-                        product, current_price, new_price, chart_path, deal_analysis
-                    )
-                    print(f"🤑 Price dropped for {product['name']} to {new_price}")
+                        chart_path = generate_chart_image(
+                            product_id, title, current_price, new_price
+                        )
+                        await send_price_alert_telegram(
+                            product, current_price, new_price, chart_path, deal_analysis
+                        )
+                        print(f"🤑 Price dropped for {product['name']} to {new_price}")
                 elif new_price > current_price:
-                    # Price increased - just update
-                    save_price_history(product_id, new_price)
-                    generate_chart_image(product_id, title, current_price, new_price)
-                    product["price"] = new_price
-                    product["status"] = ""
-                    print(f"🥲 Price increased for {product['name']} to {new_price}")
+                    # Price increased - just update (only if save succeeds)
+                    saved = save_price_history(product_id, new_price)
+                    if saved:
+                        generate_chart_image(
+                            product_id, title, current_price, new_price
+                        )
+                        product["price"] = new_price
+                        product["status"] = ""
+                        print(
+                            f"🥲 Price increased for {product['name']} to {new_price}"
+                        )
+                    else:
+                        print(
+                            f"Did not save suspicious/invalid increase for {product_id}: {new_price}"
+                        )
+                        product["status"] = "Suspicious"
                 else:
                     print(f"🙂 Price unchanged for {product['name']}")
 
