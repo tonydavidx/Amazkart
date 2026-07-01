@@ -3,8 +3,10 @@ import os
 import re
 import argparse
 import validators
+import asyncio
 from price_tracker import load_products, save_products
 from config import PRODUCTS_CSV
+from main import track_prices
 
 BASE_LINK = "https://www.amazon.in/dp/"
 
@@ -109,6 +111,7 @@ def remove_product(identifier):
 def print_help():
     print("\nAvailable Commands:")
     print("  list          - Show all products")
+    print("  fetch         - Run price tracker now")
     print("  add [url]     - Add a new product (prompts for URL if not provided)")
     print("  remove [id]   - Remove product by Index or ASIN")
     print("  help          - Show this help message")
@@ -136,6 +139,12 @@ def interactive_mode():
                 break
             
             elif cmd == 'list':
+                list_products()
+            
+            elif cmd == 'fetch':
+                print("Starting price tracker...")
+                asyncio.run(track_prices())
+                print("\nFetch completed.")
                 list_products()
             
             elif cmd == 'help':
@@ -173,6 +182,9 @@ def main():
         # List command
         subparsers.add_parser("list", help="List all products")
 
+        # Fetch command
+        subparsers.add_parser("fetch", help="Run price tracker now")
+
         # Add command
         add_parser = subparsers.add_parser("add", help="Add a new product")
         add_parser.add_argument("link", nargs="?", help="Amazon product link")
@@ -186,6 +198,8 @@ def main():
 
         if args.command == "list":
             list_products()
+        elif args.command == "fetch":
+            asyncio.run(track_prices())
         elif args.command == "add":
             add_product(args.link, args.name)
         elif args.command == "remove":

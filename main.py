@@ -72,10 +72,9 @@ async def track_prices():
                 try:
                     current_price = int(product["price"])
                 except Exception:
-                    # If current price missing or invalid, treat as 0 so we can initialize
                     current_price = 0
 
-                # Basic sanity check against history and last price
+                # 1. Sanity Check First
                 if not is_sane_price(product_id, new_price):
                     print(
                         f"Suspicious price detected for {product_id}: {new_price}. Skipping update."
@@ -83,13 +82,21 @@ async def track_prices():
                     product["status"] = "Suspicious"
                     continue
 
-                if new_price < current_price:
-                    # Price dropped - save and notify (only if save succeeds)
+                # 2. Handle Price Changes or Initialization
+                if current_price == 0:
+                    # Initial price fetch
+                    saved = save_price_history(product_id, new_price)
+                    if saved:
+                        product["price"] = new_price
+                        product["status"] = ""
+                        print(f"✅ Initialized price for {product['name']} to {new_price}")
+                    else:
+                        product["status"] = "Suspicious"
+                
+                elif new_price < current_price:
+                    # Price dropped - save and notify
                     saved = save_price_history(product_id, new_price)
                     if not saved:
-                        print(
-                            f"Did not save suspicious/invalid drop for {product_id}: {new_price}"
-                        )
                         product["status"] = "Suspicious"
                     else:
                         product["price"] = new_price
@@ -106,8 +113,9 @@ async def track_prices():
                             product, current_price, new_price, chart_path, deal_analysis
                         )
                         print(f"🤑 Price dropped for {product['name']} to {new_price}")
+                
                 elif new_price > current_price:
-                    # Price increased - just update (only if save succeeds)
+                    # Price increased - just update
                     saved = save_price_history(product_id, new_price)
                     if saved:
                         generate_chart_image(
@@ -119,9 +127,6 @@ async def track_prices():
                             f"🥲 Price increased for {product['name']} to {new_price}"
                         )
                     else:
-                        print(
-                            f"Did not save suspicious/invalid increase for {product_id}: {new_price}"
-                        )
                         product["status"] = "Suspicious"
                 else:
                     print(f"🙂 Price unchanged for {product['name']}")
