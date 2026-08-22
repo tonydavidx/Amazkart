@@ -1,5 +1,5 @@
 .venv/
 .env
 /data/
-*.csv
-*.png
+.main-beatifulsoup.py
+.main-old.py

@@ -3,7 +3,7 @@ import os
 import re
 import validators
 
-product_csv_file = "D:/Documents/Python/Amazkart/data/products.csv"
+product_csv_file = "D:/Documents/Python/Amazkart/products.csv"
 
 product_links = []
 

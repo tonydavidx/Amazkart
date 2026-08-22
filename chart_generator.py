@@ -29,10 +29,10 @@ def generate_chart_image(product_id, product_name, old_price, new_price):
     Returns: Path to generated image or None if failed
     """
     history_file = os.path.join(DATA_DIR, f"{product_id}.csv")
-    safe_product_name = "".join(
+    safe_title = "".join(
         c for c in product_name if c.isalnum() or c in (" ", "_")
     ).rstrip()
-    image_path = os.path.join(DATA_DIR, f"{safe_product_name}_chart.png")
+    image_path = os.path.join(DATA_DIR, f"{product_id}_{safe_title}.png")
 
     try:
         df = load_and_process_data(history_file)

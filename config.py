@@ -5,7 +5,7 @@ import os
 # Get the absolute path of the directory where the script is located
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
-PRODUCTS_CSV = os.path.join(DATA_DIR, "products.csv")
+PRODUCTS_CSV = os.path.join(BASE_DIR, "products.csv")
 
 # Email Configuration
 EMAIL_FROM = os.getenv("WHC_FROM_EMAIL")

@@ -1,8 +1,10 @@
 import logging
 import re
+
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-from config import TELEGRAM_CHAT_ID, TELEGRAM_ACCESS_TOKEN
+
+from config import TELEGRAM_ACCESS_TOKEN, TELEGRAM_CHAT_ID
 from price_tracker import load_products, save_products
 
 logging.basicConfig(

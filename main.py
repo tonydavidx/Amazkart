@@ -1,29 +1,51 @@
 import asyncio
 import random
-from selenium.webdriver.common.by import By
+from time import sleep
+
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.by import By
+
+from chart_generator import generate_chart_image
+from deal_analyzer import analyze_deal
 from last_run import save_last_run
 from price_tracker import (
+    format_title,
     initialize_driver,
     load_products,
-    save_products,
     save_price_history,
-    format_title,
+    save_products,
 )
-from price_tracker import is_sane_price
-from deal_analyzer import analyze_deal
-from chart_generator import generate_chart_image
 from telegram_sender import send_price_alert_telegram
-from utils import is_github_actions
-from utils import parse_price_to_int
+from utils import is_github_actions, parse_price_to_int
 
 
-async def track_prices():
+async def track_prices(filter_id=None):
     driver = initialize_driver()
     products = load_products()
 
+    def matches(product):
+        if filter_id is None:
+            return True
+        try:
+            idx = int(filter_id)
+            return 0 <= idx < len(products) and products[idx] is product
+        except ValueError:
+            return filter_id in product.get("link", "")
+
+    if filter_id is not None:
+        found = any(matches(p) for p in products)
+        if not found:
+            try:
+                int(filter_id)
+                print(f"Invalid index: {filter_id}")
+            except ValueError:
+                print(f"No product found with ASIN: {filter_id}")
+            return
+
     try:
         for product in products:
+            if not matches(product):
+                continue
             try:
                 product_id = product["link"].split("/")[-1]
                 # skip unimportant products if run on github actions
@@ -51,9 +73,15 @@ async def track_prices():
                 title = format_title(title_element.text)
                 product["name"] = title
 
+                product_box = driver.find_element(By.ID, "centerCol")
+                sleep(3)  # Random sleep to mimic human behavior
+
                 # Get current price
                 try:
-                    price_element = driver.find_element(By.CLASS_NAME, "a-price-whole")
+                    price_element = product_box.find_element(
+                        By.CLASS_NAME, "a-price-whole"
+                    )
+                    print(f"Price: {price_element.text}")
                 except NoSuchElementException:
                     product["status"] = "Unavailable"
                     print(f"Product {product['name']} is unavailable.")
@@ -75,12 +103,12 @@ async def track_prices():
                     current_price = 0
 
                 # 1. Sanity Check First
-                if not is_sane_price(product_id, new_price):
-                    print(
-                        f"Suspicious price detected for {product_id}: {new_price}. Skipping update."
-                    )
-                    product["status"] = "Suspicious"
-                    continue
+                # if not is_sane_price(product_id, new_price):
+                #     print(
+                #         f"Suspicious price detected for {product_id}: {new_price}. Skipping update."
+                #     )
+                #     product["status"] = "Suspicious"
+                #     continue
 
                 # 2. Handle Price Changes or Initialization
                 if current_price == 0:
@@ -89,10 +117,12 @@ async def track_prices():
                     if saved:
                         product["price"] = new_price
                         product["status"] = ""
-                        print(f"✅ Initialized price for {product['name']} to {new_price}")
+                        print(
+                            f"✅ Initialized price for {product['name']} to {new_price}"
+                        )
                     else:
                         product["status"] = "Suspicious"
-                
+
                 elif new_price < current_price:
                     # Price dropped - save and notify
                     saved = save_price_history(product_id, new_price)
@@ -113,7 +143,7 @@ async def track_prices():
                             product, current_price, new_price, chart_path, deal_analysis
                         )
                         print(f"🤑 Price dropped for {product['name']} to {new_price}")
-                
+
                 elif new_price > current_price:
                     # Price increased - just update
                     saved = save_price_history(product_id, new_price)

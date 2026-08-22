@@ -111,7 +111,7 @@ def remove_product(identifier):
 def print_help():
     print("\nAvailable Commands:")
     print("  list          - Show all products")
-    print("  fetch         - Run price tracker now")
+    print("  fetch [id]    - Run price tracker (all products, or specific by index/ASIN)")
     print("  add [url]     - Add a new product (prompts for URL if not provided)")
     print("  remove [id]   - Remove product by Index or ASIN")
     print("  help          - Show this help message")
@@ -142,8 +142,9 @@ def interactive_mode():
                 list_products()
             
             elif cmd == 'fetch':
+                product_id = args[0] if args else None
                 print("Starting price tracker...")
-                asyncio.run(track_prices())
+                asyncio.run(track_prices(product_id))
                 print("\nFetch completed.")
                 list_products()
             
@@ -183,7 +184,8 @@ def main():
         subparsers.add_parser("list", help="List all products")
 
         # Fetch command
-        subparsers.add_parser("fetch", help="Run price tracker now")
+        fetch_parser = subparsers.add_parser("fetch", help="Run price tracker now")
+        fetch_parser.add_argument("id", nargs="?", help="Product index or ASIN to fetch only that product")
 
         # Add command
         add_parser = subparsers.add_parser("add", help="Add a new product")
@@ -199,7 +201,7 @@ def main():
         if args.command == "list":
             list_products()
         elif args.command == "fetch":
-            asyncio.run(track_prices())
+            asyncio.run(track_prices(args.id))
         elif args.command == "add":
             add_product(args.link, args.name)
         elif args.command == "remove":

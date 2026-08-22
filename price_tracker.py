@@ -114,7 +114,7 @@ def save_price_history(product_id, price):
             f.write("datetime,price\n")
         with open(history_file, "a") as f:
             f.write(f"{timestamp_changed},{price}\n")
-        return
+        return True
 
     # Read last entry
     with open(history_file, "r") as f:
@@ -122,7 +122,7 @@ def save_price_history(product_id, price):
         if len(lines) <= 1:  # Only header exists
             with open(history_file, "a") as f:
                 f.write(f"{timestamp_changed},{price}\n")
-            return
+            return True
         last_entry = lines[-1].strip().split(",")
         try:
             last_price = int(last_entry[1])
@@ -145,9 +145,7 @@ def save_price_history(product_id, price):
     if save_entry:
         # basic sanity check: ignore obvious spikes/drops relative to history
         if not is_sane_price(product_id, price):
-            print(
-                f"Suspicious price for {product_id}: {price}. Skipping save."
-            )
+            print(f"Suspicious price for {product_id}: {price}. Skipping save.")
             return False
 
         with open(history_file, "a") as f:
@@ -160,23 +158,23 @@ def is_sane_price(product_id: str, price: int) -> bool:
     """Quick sanity check against recent history. Returns True if price looks reasonable."""
     if price <= 0:
         return True  # Let caller handle 0/unavailability
-        
+
     history_file = os.path.join(DATA_DIR, f"{product_id}.csv")
     if not os.path.exists(history_file):
         return True
-        
+
     try:
         # Read the history file
         df = pd.read_csv(history_file)
         if df.empty:
             return True
-            
+
         # Get recent non-zero prices (last 10)
-        recent_history = df[df['price'] > 0]['price'].tail(10)
-        
+        recent_history = df[df["price"] > 0]["price"].tail(10)
+
         if recent_history.empty:
             return True
-            
+
         if len(recent_history) < 3:
             # Not enough data for median, use last known price
             last_price = recent_history.iloc[-1]
@@ -184,15 +182,15 @@ def is_sane_price(product_id: str, price: int) -> bool:
             if price > last_price * 10 or price < last_price * 0.1:
                 return False
             return True
-        
+
         # Use median for robustness against previous errors
         median_price = recent_history.median()
-        
+
         # If new price is > 10x median or < 0.1x median, it's suspicious
         # We use a broad threshold (10x) because Amazon prices can drop/jump significantly
         if price > median_price * 10 or price < median_price * 0.1:
             return False
-            
+
         return True
     except Exception as e:
         print(f"Error in is_sane_price for {product_id}: {e}")
